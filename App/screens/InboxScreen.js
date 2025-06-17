@@ -1,70 +1,81 @@
 import React, { useState } from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, Modal, SafeAreaView, FlatList} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  View,
+  Text,
+  SectionList,
+  TouchableOpacity,
+  StyleSheet
+} from 'react-native';
+import { isAfter } from 'date-fns';
+import { useTaskContext } from '../context/TaskContext';
+import { groupTasksByDate } from '../utils/groupTasks';
+import TaskItem from '../components/TaskItem';
+import FAB from '../components/FAB';
 import AddTaskModal from '../components/AddTaskModal';
-import { useTasks } from '../context/TaskContext';
-
+import TaskDetailModal from '../components/TaskDetailModal';
 
 const InboxScreen = () => {
+  const { state, moveTaskToCategory } = useTaskContext();
   const [modalVisible, setModalVisible] = useState(false);
-  const { tasks, toggleTaskCompleted } = useTasks();
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
 
-  const renderTaskItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.taskItem}
-      onPress={() => toggleTaskCompleted(item.id)}
-    >
-      <Ionicons
-        name={item.completed ? 'checkmark-circle' : 'ellipse-outline'}
-        size={24}
-        color={item.completed ? '#4CAF50' : '#ccc'}
-        style={styles.checkIcon}
-      />
-      <View style={styles.taskContent}>
-        <Text
-          style={[
-            styles.taskText,
-            item.completed && { textDecorationLine: 'line-through', color: '#999' },
-          ]}
-        >
-          {item.text}
-        </Text>
-        {(item.context || item.projectId) && (
-          <Text style={styles.metaText}>
-            {item.context ? `@${item.context}` : ''} {item.projectId ? `(Project)` : ''}
-          </Text>
-        )}
-      </View>
-    </TouchableOpacity>
+  const handleMoveTo = (id, category) => {
+    moveTaskToCategory(id, category);
+    setDetailModalVisible(false);
+    setSelectedTask(null);
+  };
+
+  const filtered = state.tasks.filter(
+    task =>
+      !task.completed &&
+      !task.trashed &&
+      isAfter(new Date(task.dueDate), new Date(2020, 0, 1))
   );
 
+  const grouped = groupTasksByDate(
+    filtered.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+  );
+
+  const handleOnPressItem= (item)  => {
+      setSelectedTask(item);
+      setDetailModalVisible(true);
+  };
+  
   return (
-    <SafeAreaView style={styles.container}>
-      {tasks.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Ionicons name="mail-outline" size={60} color="#999" />
-          <Text style={styles.emptyText}>No tasks in Inbox</Text>
-          <Text style={styles.subText}>Tap + to add a new task</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={tasks}
-          keyExtractor={(item) => item.id}
-          renderItem={renderTaskItem}
-          contentContainerStyle={styles.listContainer}
+    <View style={styles.container}>
+      <Text style={styles.header}>Inbox</Text>
+
+      <SectionList
+        sections={grouped}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+            <TaskItem task={item} onPress={() => handleOnPressItem(item)} />
+        )}
+        renderSectionHeader={({ section: { title } }) => (
+          <Text style={styles.sectionHeader}>{title}</Text>
+        )}
+      />
+
+      <FAB onPress={() => setModalVisible(true)} />
+
+      <AddTaskModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+      />
+
+      {selectedTask &&  detailModalVisible &&(
+        <TaskDetailModal
+          visible={detailModalVisible}
+          task={selectedTask}
+          onClose={() => {
+            setDetailModalVisible(false);
+            setSelectedTask(null);
+          }}
+          moveTo={handleMoveTo}
         />
       )}
-
-      {/* Floating + Button */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setModalVisible(true)}
-      >
-        <Ionicons name="add" size={28} color="#fff" />
-      </TouchableOpacity>
-
-      <AddTaskModal visible={modalVisible} onClose={() => setModalVisible(false)} />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -73,63 +84,24 @@ export default InboxScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    backgroundColor: '',
+    marginTop: 35
   },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyText: {
-    marginTop: 12,
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
-  },
-  subText: {
-    fontSize: 14,
-    color: '#888',
-    marginTop: 4,
-  },
-  listContainer: {
+  header: {
+    fontSize: 24,
+    fontWeight: '700',
     paddingVertical: 12,
-    marginTop: 28,
-    
   },
   taskItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderBottomColor: '#eee',
-    borderBottomWidth: 1,
+    marginBottom: 12,
   },
-  checkIcon: {
-    marginRight: 16,
-  },
-  taskContent: {
-    flex: 1,
-  },
-  taskText: {
+  sectionHeader: {
     fontSize: 16,
-    color: '#333',
-  },
-  metaText: {
-    fontSize: 12,
-    color: '#888',
-    marginTop: 4,
-  },
-  fab: {
-    position: 'absolute',
-    right: 24,
-    bottom: 24,
-    backgroundColor: '#007AFF',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
+    fontWeight: '600',
+    backgroundColor: '#f1f1f1',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 4,
   },
 });
-
