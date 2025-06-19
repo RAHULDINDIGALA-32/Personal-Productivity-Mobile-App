@@ -1,15 +1,15 @@
-# 📱 FlowDo – Personal Productivity App (GTD Methodology)
+# 📱 FlowDo 
 
 FlowDo is a minimalist productivity app inspired by the "Getting Things Done" (GTD) framework. Designed for task clarity and mental flow, it helps you capture ideas, organize them into projects, and take action with context-aware planning.
 
-![FlowDo Banner](./assets/logo.png)
+![FlowDo Banner](./App/assets/logo.png)
 
 ---
 
 ## 🚀 Demo Links
 
-- 📱 **Expo Preview (for testing)**: [Try on Expo Go](https://expo.dev/@your-username/flowdo)
-- 📦 **APK Download (Android)**: [Download APK](https://your-upload-link.com/flowdo.apk)
+- 📱 **Expo Preview (for testing)**: [Try on Expo Go](https://expo.dev/preview/update?message=Initial%20publish%20of%20FLOWDO%20App&updateRuntimeVersion=1.0.0&createdAt=2025-06-19T16%3A36%3A17.761Z&slug=exp&projectId=503bec3b-0709-446e-bae4-5250be8e4497&group=09b767d7-1954-4a7a-9afd-3ef447caa6fc)
+- 📦 **APK Download (Android)**: [Download APK](https://expo.dev/accounts/rahul0032/projects/FlowDo/builds/4cb996c5-e9e3-4737-b902-32d004f5e69c)
 
 ---
 
@@ -59,7 +59,8 @@ FlowDo is a minimalist productivity app inspired by the "Getting Things Done" (G
 ### Steps
 
 ```bash
-git clone https://github.com/your-username/flowdo.git
-cd flowdo
+git clone https://github.com/RAHULDINDIGALA-32/Personal-Productivity-Mobile-App.git
+cd Personal-Productivity-Mobile-App
+cd App
 npm install
 npx expo start
