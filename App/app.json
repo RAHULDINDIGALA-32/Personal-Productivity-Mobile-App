@@ -1,29 +1,39 @@
 {
   "expo": {
-    "name": "App",
-    "slug": "App",
+    "name": "FlowDo",
+    "slug": "FlowDo",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#f6f8fa",
+      "dark": {
+        "image": "./assets/logo.png",
+        "backgroundColor": "#222"
+      }
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/logo.png",
+        "backgroundColor": "#f6f8fa"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.rahul0032.FlowDo"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/icon.ico"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "503bec3b-0709-446e-bae4-5250be8e4497"
+      }
     }
   }
 }

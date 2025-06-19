@@ -44,25 +44,26 @@ const reducer = (state, action) => {
       break;
 
     case 'MOVE_TASK_CATEGORY':
-      return {
-        ...state,
-        tasks: state.tasks.map(task =>
-          task.id === action.payload.taskId
-            ? {
-                ...task,
-                category: action.payload.category,
-                projectId: action.payload.projectId !== undefined
-                  ? action.payload.projectId
-                  : task.projectId,
-                context: action.payload.context !== undefined
-                  ? action.payload.context
-                  : task.context,
-              }
-            : task
-        ),
-      };
-      break;
+  const updatedTasks = state.tasks.map(task =>
+    task.id === action.payload.taskId
+      ? {
+          ...task,
+          category: action.payload.category,
+          projectId:
+            action.payload.projectId !== undefined
+              ? action.payload.projectId
+              : task.projectId,
+          contextId:
+            action.payload.contextId !== undefined
+              ? action.payload.contextId
+              : task.contextId,
+        }
+      : task
+  );
+  updatedState = { ...state, tasks: updatedTasks };
+  break;
 
+    
     case 'UPDATE_TASK':
       updatedState = {
         ...state,
@@ -78,15 +79,44 @@ const reducer = (state, action) => {
         projects: [...state.projects, action.payload],
       };
       break;
+    
+  case 'DELETE_PROJECT_AND_TASKS':
+    updatedState = {
+    ...state,
+    projects: state.projects.filter(p => p.id !== action.payload),
+    tasks: state.tasks.filter(task => task.projectId !== action.payload),
+  };
+  break;
 
-    case 'ADD_CONTEXT':
-      updatedState = {
-        ...state,
-        contexts: state.contexts.includes(action.payload)
-          ? state.contexts
-          : [...state.contexts, action.payload],
-      };
-      break;
+  case 'UPDATE_PROJECT':
+    updatedState = {
+    ...state,
+    projects: state.projects.map(p =>
+      p.id === action.payload.id
+        ? { ...p, ...action.payload }
+        : p
+    ),
+  };
+  break;
+
+  case 'ADD_CONTEXT':
+  if (state.contexts.some(c => c.name === action.payload.name)) return state;
+  return {
+    ...state,
+    contexts: [...state.contexts, { id: action.payload.id, name: action.payload.name }],
+  };
+  
+  case 'DELETE_CONTEXT':
+  updatedState = {
+    ...state,
+    contexts: state.contexts.filter(c => c.id !== action.payload),
+    tasks: state.tasks.map(task =>
+      task.contextId === action.payload
+        ? { ...task, contextId: null, completed: true } 
+        : task
+    ),
+  };
+  break;
 
     default:
       return state;
@@ -133,43 +163,70 @@ useEffect(() => {
 
   const updateTask = (updatedTask) => dispatch({ type: 'UPDATE_TASK', payload: updatedTask });
 
-  const moveTaskToCategory = (id, category, projectId = null) => { dispatch({ type: 'MOVE_TASK', payload: { id, category, projectId } });};
-  const addProject = (name) => {
-    const newProject = {
-      id: uuid.v4(),
-      name,
-    };
-    dispatch({ type: 'ADD_PROJECT', payload: newProject });
-  };
+  const moveTaskToCategory = (id, category, payload = {}) => {
+  dispatch({
+    type: 'MOVE_TASK_CATEGORY',
+    payload: {
+      taskId: id,
+      category,
+      ...payload, 
+    },
+  });
+};
+
+const addProject = (name, id = uuid.v4()) => {
+  const newProject = { id, name };
+  dispatch({ type: 'ADD_PROJECT', payload: newProject });
+};
+
+const deleteProject = (projectId) => {
+  dispatch({ type: 'DELETE_PROJECT_AND_TASKS', payload: projectId });
+};
+
+const updateProject = (project) => dispatch({ type: 'UPDATE_PROJECT', payload: project, });
+
 
   const moveTo = (taskId, destination, payload = {}) => {
+  const task = state.tasks.find(t => t.id === taskId);
+
   if (destination === 'project') {
+    // If the task is already a next action, keep it as a next action!
     dispatch({
       type: 'MOVE_TASK_CATEGORY',
       payload: {
         taskId,
-        category: 'projects',
+        category: (task?.category === 'nextActions' || task?.category === 'next') ? task.category : 'projects',
         projectId: payload.projectId,
+        contextId: task?.contextId,
       },
     });
-  } else if (destination === 'next') {
+  } else if (destination === 'next' || destination === 'nextActions') {
     dispatch({
       type: 'MOVE_TASK_CATEGORY',
       payload: {
         taskId,
         category: 'nextActions',
-        context: payload.context,
+        contextId: payload.contextId,
+        projectId: task?.projectId,
       },
     });
   }
 };
 
   const getTasksByProject = (projectId) => {
-    return state.tasks.filter(task => task.projectId === projectId);
+    return state.tasks.filter(task => task.projectId === projectId &&  !task.completed && !task.trashed);
   };
 
 
-const addContext = (contextName) => { dispatch({ type: 'ADD_CONTEXT', payload: contextName }); };
+const addContext = (name, id = uuid.v4()) => {
+  if (!name.trim()) return; 
+  if (state.contexts.some(c => c.name === name.trim())) return; 
+  dispatch({ type: 'ADD_CONTEXT', payload: { id, name: name.trim() } });
+};
+
+const deleteContext = (contextId) => {
+  dispatch({ type: 'DELETE_CONTEXT', payload: contextId });
+};
 
 const saveState = (updatedState) => {
   AsyncStorage.setItem('taskState', JSON.stringify(updatedState));
@@ -177,7 +234,7 @@ const saveState = (updatedState) => {
 
   return (
     <TaskContext.Provider
-      value={{ state, dispatch, addTask, toggleComplete, undoComplete, moveTaskToCategory, updateTask, addProject, addContext, getTasksByProject, saveState, moveTo } }
+      value={{ state, dispatch, addTask, toggleComplete, undoComplete, moveTaskToCategory, updateTask, addProject, deleteProject, updateProject, addContext, deleteContext, getTasksByProject, saveState, moveTo } }
     >
       {children}
     </TaskContext.Provider>

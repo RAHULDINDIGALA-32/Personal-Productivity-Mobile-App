@@ -1,83 +1,30 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet } from 'react-native';
-import Toast from 'react-native-toast-message';
-
-import TodayScreen from './screens/TodayScreen';
-import InboxScreen from './screens/InboxScreen';
-import ProjectsStack from './navigation/ProjectsStack';
-import NextActionsScreen from './screens/NextActionsScreen';
+import { StatusBar } from 'expo-status-bar';
+import { View, Platform, StatusBar as RNStatusBar } from 'react-native';
 import { TaskProvider } from './context/TaskContext';
+import AppNavigator from './navigation/AppNavigator';
+import SplashScreen from './screens/SplashScreen';
 
-const Tab = createBottomTabNavigator();
-
-
-function TabNavigator() {
-  return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: '#8E8E93',
-        tabBarStyle: {
-          backgroundColor: '#fefefe',
-          height: 125,
-          borderTopWidth: 0.5,
-          borderTopColor: '#ccc',
-          paddingBottom: 8,
-          paddingTop: 12,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-        },
-        tabBarIcon: ({ color, focused }) => {
-          let iconName;
-          if (route.name === 'Today') iconName = focused ? 'calendar' : 'calendar-outline';
-          else if (route.name === 'Inbox') iconName = focused ? 'mail' : 'mail-outline';
-          else if (route.name === 'Projects') iconName = focused ? 'briefcase' : 'briefcase-outline';
-          else if (route.name === 'Next Actions') iconName = focused ? 'checkmark-done' : 'checkmark-done-outline';
-
-          return (
-            <View style={[styles.tabIconContainer, focused && styles.activeTabIconContainer]}>
-              <Ionicons name={iconName} size={24} color={color} />
-            </View>
-          );
-        },
-      })}
-    >
-      <Tab.Screen name="Today" component={TodayScreen} />
-      <Tab.Screen name="Inbox" component={InboxScreen} />
-      <Tab.Screen name="Projects" component={ProjectsStack} />
-      <Tab.Screen name="Next Actions" component={NextActionsScreen} />
-    </Tab.Navigator>
-  );
-}
+const STATUSBAR_HEIGHT = Platform.OS === 'android' ? RNStatusBar.currentHeight : 0;
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSplash(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (showSplash) {
+    return <SplashScreen />;
+  }
   return (
     <TaskProvider>
       <NavigationContainer>
-        <TabNavigator />
-        <Toast />
+        <StatusBar style="dark" backgroundColor="#f6f8fa" translucent />
+        <AppNavigator />
       </NavigationContainer>
     </TaskProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  tabIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  activeTabIconContainer: {
-    backgroundColor: '#e0f7fa',
-    borderRadius: 20,
-  },
-});
